@@ -1,0 +1,192 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:latest
+    container_name: db
+    restart: always
+    volumes:
+      - ./sql-db/00-create-schema.sql:/docker-entrypoint-initdb.d/00-create-schema.sql
+      - ./sql-db/01-create-tables.sql:/docker-entrypoint-initdb.d/01-create-tables.sql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_ROOT_PASSWORD: Admin@123
+      POSTGRES_USER: everton_resk
+      POSTGRES_DB: manager
+      POSTGRES_PASSWORD: Admin@123
+    networks:
+      - manager-network
+
+  casdoor:
+    image: casbin/casdoor:latest # A imagem mais recente do Casdoor
+    # build:
+    #   context: .
+    #   dockerfile: ./docker/casdoor/Dockerfile
+    container_name: casdoor
+    environment:
+      - driverName=postgres
+      - dataSourceName=postgres://everton_resk:Admin@123@db:5432/manager?sslmode=disable&search_path=casdoor # Usando variável de schema
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docker/casdoor/app.conf:/app/conf/app.conf # Mapeia o app.conf do host para o container
+      - ./docker/casdoor/files/:/files # Mapeia o diretório do host para o container
+      - ./docker/casdoor/uploads/:/app/data/uploads # Mapeia a pasta uploads do host para o container
+    networks:
+      - manager-network
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  goapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goapp
+    env_file:
+      - path: .env
+    volumes:
+      - .:/go/app
+    platform: linux/arm64/v8
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+      - kong
+      - keycloak
+    networks:
+      - manager-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HEALTH_ENABLED: true
+      KC_DB: postgres
+      KC_DB_SCHEMA: keycloak_manager
+      KC_DB_URL: jdbc:postgresql://db/manager
+      KC_DB_USERNAME: everton_resk
+      KC_DB_PASSWORD: Admin@123
+      KEYCLOAK_USER: admin_resk
+      KEYCLOAK_PASSWORD: Admin@123
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin_resk
+      KC_BOOTSTRAP_ADMIN_PASSWORD: Admin@123
+    ports:
+      - 8080:8080
+    restart: always
+    depends_on:
+      - db
+    command:
+      - start-dev
+    networks:
+      - manager-network
+
+  kong_migrations:
+    container_name: kong_migrations
+    image: kong:ubuntu
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: db
+      KONG_PG_DATABASE: manager
+      KONG_PG_SCHEMA: kong_manager
+      KONG_PG_USER: everton_resk
+      KONG_PG_PASSWORD: Admin@123
+    restart: on-failure:2
+    depends_on:
+      - db
+    networks:
+      - manager-network
+
+  kong:
+    container_name: kong
+    image: kong-keycloak
+    restart: on-failure:10
+    ports:
+      - 8005:8000
+      - 8001:8001
+      - 8002:8002
+      - 8003:8003
+      - 8004:8004
+      - 8443:8443
+      - 8444:8444
+      - 8445:8445
+    environment:
+      KONG_PLUGINS: bundled,jwt-keycloak,oidc
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: db
+      KONG_PG_DATABASE: manager
+      KONG_PG_SCHEMA: kong_manager
+      KONG_PG_USER: everton_resk
+      KONG_PG_PASSWORD: Admin@123
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stdout
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yaml
+    volumes:
+      - ./kong/declarative:/kong/declarative
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      - kong_migrations
+      - db
+    networks:
+      - manager-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  manager-network:
+    driver: bridge
+
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.3.0
+  #   hostname: zookeeper
+  #   container_name: zookeeper
+  #   ports:
+  #     - "2181:2181"
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #     KAFKA_ZOOKEEPER_CONNECT: localhost:32181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
+  #     KAFKA_BROKER_ID: 2
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     CONFLUENT_SUPPORT_CUSTOMER_ID: c0
+  #     KAFKA_CONFLUENT_LICENSE: "ABC123XYZ737BVT"
+
+  # kafka:
+  #   image: confluentinc/cp-server:7.3.0
+  #   hostname: kafka
+  #   container_name: kafka
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - "9092:9092"
+  #     - "9094:9094"
+  #   environment:
+  #     KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+  #     KAFKA_NODE_ID: 1
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+  #     KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-kraft:29092,PLAINTEXT_HOST://localhost:9092"
+  #     KAFKA_PROCESS_ROLES: "broker,controller"
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka-kraft:29093"
+  #     KAFKA_LISTENERS: "PLAINTEXT://kafka-kraft:29092,CONTROLLER://kafka-kraft:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+  #     KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  #     CLUSTER_ID: "q1Sh-9_ISia_zwGINzRvyQ"
+  #   restart: always
+  #   networks:
+  #     - manager-network
