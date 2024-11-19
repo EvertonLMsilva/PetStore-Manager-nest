@@ -1,15 +1,15 @@
 
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
+@Entity('auths')
 export class Auth {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 500 })
+  @Column({ length: 100 })
   email: string;
 
-  @Column('text')
+  @Column({ unique: true })
   idApplication: string;
 }
 

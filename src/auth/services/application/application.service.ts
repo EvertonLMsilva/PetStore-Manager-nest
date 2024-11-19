@@ -1,17 +1,18 @@
-import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable } from '@nestjs/common';
+// import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Application } from 'src/auth/entities/application.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class ApplicationService {
   constructor(
-    @Inject('APPLICATION_REPOSITORY')
-    private photoRepository: Repository<Application>,
-    private http: HttpService,
+    @InjectRepository(Application)
+    private applicationRepository: Repository<Application>,
+    // private http: HttpService,
   ) { }
 
   async findAll(): Promise<Application[]> {
-    return this.photoRepository.find();
+    return this.applicationRepository.find();
   }
 }

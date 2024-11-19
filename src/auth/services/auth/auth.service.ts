@@ -1,18 +1,20 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
-import { Auth } from '../../entities/auth.entity';
 import { Repository } from 'typeorm';
+import { Auth } from '../../entities/auth.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject('APPLICATION_REPOSITORY')
-    private photoRepository: Repository<Auth>,
-    private http: HttpService,
+    @InjectRepository(Auth)
+    private authRepository: Repository<Auth>,
+    // private readonly httpService: HttpService,
   ) { }
 
   async findUser(): Promise<Auth[]> {
-    return this.photoRepository.find();
+    // this.httpService.axiosRef.get('http://localhost:3000/cats');
+    return this.authRepository.find();
   }
 
   login(user: any): String {

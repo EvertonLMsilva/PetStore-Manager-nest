@@ -1,27 +1,29 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { AuthController } from './controllers/auth/auth.controller';
 import { HttpModule } from '@nestjs/axios';
-import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from 'src/database/database.module';
 import { ApplicationService } from './services/application/application.service';
 import { AuthService } from './services/auth/auth.service';
-import { authProviders } from './providers/auth.providers';
-import { applicationProviders } from './providers/application.providers';
 import { UserController } from './controllers/user/user.controller';
 import { ApplicationController } from './controllers/Application/Application.controller';
-import { UserService } from './services/user/user.service';
 import { LoggerMiddleware } from 'src/middleware/logger.middleware';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import configuration from 'src/config/configuration';
+import { Auth } from './entities/auth.entity';
+import { Application } from './entities/application.entity';
 
 @Module({
   imports: [
-    DatabaseModule,
+    ConfigModule.forRoot({
+      load: [configuration],
+    }),
     HttpModule.registerAsync({
       useFactory: () => ({
         timeout: 5000,
         maxRedirects: 5,
       }),
     }),
-    ConfigModule.forRoot()
+    TypeOrmModule.forFeature([Auth, Application]),
   ],
   controllers: [
     AuthController,
@@ -29,15 +31,11 @@ import { LoggerMiddleware } from 'src/middleware/logger.middleware';
     ApplicationController,
   ],
   providers: [
-    ...authProviders,
-    ...applicationProviders,
     AuthService,
     ApplicationService,
-    UserService,
-
-
-  ],
+  ]
 })
+
 export class AuthModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
