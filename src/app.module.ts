@@ -6,14 +6,14 @@ import configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { databaseProviders } from './auth/providers/database.provider';
+import { databaseProviders } from './providers/database.provider';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
     }),
-    ...databaseProviders,
+    databaseProviders,
     AuthModule,
   ],
   providers: [

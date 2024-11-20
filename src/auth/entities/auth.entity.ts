@@ -1,5 +1,6 @@
 
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Application } from './application.entity';
 
 @Entity('auths')
 export class Auth {
@@ -9,7 +10,10 @@ export class Auth {
   @Column({ length: 100 })
   email: string;
 
-  @Column({ unique: true })
-  idApplication: string;
+  @ManyToOne(() => Application, (application) => application.id)
+  idApplication: Application;
+
+  @Column({ default: true })
+  isActive: boolean;
 }
 

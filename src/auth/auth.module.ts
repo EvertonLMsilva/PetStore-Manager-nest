@@ -14,6 +14,7 @@ import { Application } from './entities/application.entity';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Auth, Application]),
     ConfigModule.forRoot({
       load: [configuration],
     }),
@@ -23,7 +24,6 @@ import { Application } from './entities/application.entity';
         maxRedirects: 5,
       }),
     }),
-    TypeOrmModule.forFeature([Auth, Application]),
   ],
   controllers: [
     AuthController,

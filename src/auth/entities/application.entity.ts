@@ -1,5 +1,6 @@
 
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Auth } from './auth.entity';
 
 @Entity('applications')
 export class Application {
@@ -14,5 +15,9 @@ export class Application {
 
   @Column('text')
   clientSecret: string;
+
+  @OneToMany(() => Auth, (auth) => auth.id)
+  idApplication: Auth[];
+
 }
 
