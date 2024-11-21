@@ -1,22 +1,21 @@
-import { Controller, Body, Post, Get } from '@nestjs/common';
-import { LoginAuthDto } from '../auth/loginAuth.dto';
-import { AuthService } from '../../services/auth/auth.service';
+import { Controller, Body, Post, Get, Param } from '@nestjs/common';
+import { UserService } from 'src/auth/services/user/user.service';
 
-@Controller('auth')
+@Controller('user')
 export class UserController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly userService: UserService) { }
 
-  @Post('user')
-  GetToken(@Body() user: LoginAuthDto) {
-    console.log("User", user);
+  @Get()
+  async GetAllUser() {
+    const findUser = await this.userService.GetAllUser();
 
-    return { message: 'Este é um endpoint protegido' };
+    return findUser;
   }
 
-  @Get('user')
-  findUser(user: LoginAuthDto) {
-    console.log("User", user);
+  @Get('/:id')
+  async GetUser(@Param("id") id: number) {
+    const findUser = await this.userService.GetUser(id);
 
-    return { message: 'Este é um endpoint protegido 1' };
+    return findUser;
   }
 }

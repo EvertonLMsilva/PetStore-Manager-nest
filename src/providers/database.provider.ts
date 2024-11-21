@@ -16,7 +16,7 @@ export const databaseProviders = TypeOrmModule.forRootAsync({
       __dirname + '/../**/*.entity{.ts,.js}',
     ],
     synchronize: true,
-    logging: true,
+    logging: true
   }),
   inject: [ConfigService],
 

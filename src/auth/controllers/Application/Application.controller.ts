@@ -1,22 +1,24 @@
-import { Controller, Body, Post, Get } from '@nestjs/common';
-import { LoginAuthDto } from '../auth/loginAuth.dto';
-import { AuthService } from '../../services/auth/auth.service';
+import { Controller, Body, Post, Get, Param } from '@nestjs/common';
+import { ApplicationService } from 'src/auth/services/application/application.service';
+import { CreateApplicationDto } from 'src/auth/dtos/application/CreateApplication.dto';
+import { GetApplication } from 'src/auth/dtos/application/GetApplication.dto';
 
-@Controller('auth')
+@Controller('application')
 export class ApplicationController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: ApplicationService) { }
 
-  @Post('user')
-  GetToken(@Body() user: LoginAuthDto) {
-    console.log("User", user);
-
-    return { message: 'Este é um endpoint protegido' };
+  @Get(':id')
+  async findUser(@Param("id") id: number) {
+    console.log("application ===>", id);
+    const resolve = await this.authService.findUser(id);
+    return resolve;
   }
 
-  @Get('user')
-  findUser(user: LoginAuthDto) {
-    console.log("User", user);
+  // @Post('application')
+  // async createApplication(application: CreateApplicationDto) {
+  //   console.log("application controller ==>", application);
+  //   const resolve = await this.authService.createApplication(application);
 
-    return { message: 'Este é um endpoint protegido 1' };
-  }
+  //   return resolve;
+  // }
 }
