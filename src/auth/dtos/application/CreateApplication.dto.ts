@@ -1,5 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsString } from "class-validator"
-import { Application } from "src/auth/entities/application.entity"
+import { IsString } from "class-validator"
 
 export class CreateApplicationDto {
   @IsString()

@@ -11,8 +11,7 @@ export class AuthController {
 
   @Post('sign_in')
   async GetToken(@Body(new ValidationPipe()) user: GetAuthDto) {
-    const findUser = await this.authService.GetAuth(user);
-
+    const findUser = await this.authService.GenerateAccessToken(user);
     return findUser;
   }
 }

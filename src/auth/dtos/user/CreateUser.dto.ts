@@ -1,5 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsString } from "class-validator"
-import { Application } from "src/auth/entities/application.entity"
+import { IsBoolean, IsEmail, IsNotEmpty } from "class-validator"
 
 export class CreateUserDto {
   @IsEmail()

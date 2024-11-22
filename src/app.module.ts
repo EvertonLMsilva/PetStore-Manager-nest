@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common'
 import { APP_PIPE } from '@nestjs/core';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { ValidationPipe } from './auth/pipes/validation.pipe';
 import configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { databaseProviders } from './providers/database.provider';
 

@@ -1,9 +1,8 @@
 
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { Application } from './application.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
-@Entity()
-export class User {
+@Entity("user")
+export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -11,9 +10,9 @@ export class User {
   email: string;
 
   @Column({ default: true })
-  isActive: boolean;
+  isDeleted: boolean;
 
-  @ManyToOne(() => Application, (application) => application.user)
-  application: Application;
+  @Column()
+  clientId: string;
 }
 
